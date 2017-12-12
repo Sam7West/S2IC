@@ -1,0 +1,17 @@
+__________________________________________________________________________________
+
+S2ICA: Smart Serial Interface Controller, Assembler
+(Scheduler, assembler, linker & code-generator toolchain)
+
+USAGE: 
+	s2ica ?flags? ?options? file_1.asm, ?file_2.asm? ..
+	(N.b. max 8 arg's)
+
+FLAGS:
+	-h, --help	Print this usage message
+	--debug		print debugging information
+
+OPTIONS:
+	-B DIR		Directory to place output files
+	-o filename	Outputfile name
+__________________________________________________________________________________

@@ -1,0 +1,266 @@
+# ---------------------------------------------------------------------------
+#
+# -- label_resolver.test
+#
+# ---------------------------------------------------------------------------
+
+package require tcltest 2.2
+
+package require Tcl 8.6
+
+namespace import -force tcltest::*
+
+# Import package proc's under test
+source [file join .. bin s2ica.kit]
+package require s2ica
+init_token_enums
+namespace import utils::*
+
+# Utility proc.
+proc array_ordered_get { key_lst arr_name } {
+
+    upvar $arr_name arr
+
+    # get label addresses in order & silence errors    
+    set val_lst {}
+    
+    foreach key $key_lst {
+	catch { lappend val_lst $arr($key) }
+    }
+    
+    return $val_lst
+}
+
+
+# Tests..
+
+
+#---------------------------------------------------------------
+# 1st pass proc's
+#---------------------------------------------------------------
+
+test 1.1-single_label { Expect success } {
+
+    set asm_lab_str {
+	main:
+	STA
+	RDN 0 0xFF
+	STO
+	JMP main
+    }
+
+    set asm_str	""; 
+    array set label_arr {}
+
+    scrape_labels $asm_lab_str asm_str label_arr 
+
+    set label_lst { main }
+    return [array_ordered_get $label_lst label_arr]
+        
+} {0}
+
+test 1.2-single_label_&_ws { Expect success } {
+
+    set asm_lab_str {
+
+	main:
+	
+	STA
+	RDN 0 0xFF
+	STO
+	JMP main
+	
+    }
+
+    set asm_str	""; 
+    array set label_arr {}
+
+    scrape_labels $asm_lab_str asm_str label_arr 
+
+    set label_lst { main }
+    return [array_ordered_get $label_lst label_arr]
+        
+} {0}
+
+
+test 1.3-mult_labels { Expect success } {
+
+    set asm_lab_str {
+	main:
+	BRC 0 read_adc
+	BRC 1 rite_adc
+	JMP main
+	read_adc:
+	STA
+	RDA
+	STO
+	JMP main
+	write_adc:
+	STA
+	RDA
+	STO
+	JMP main
+    }
+
+    set asm_str	"";
+    array set label_arr {}
+    
+    scrape_labels $asm_lab_str asm_str label_arr 
+    
+    set label_lst { main read_adc write_adc }
+    return [array_ordered_get $label_lst label_arr]
+        
+} {0 3 7}
+
+test 1.4-mult_labels_&_ws { Expect success } {
+
+    set asm_lab_str {
+
+	main:
+
+	BRC 0 read_adc
+	BRC 1 write_adc
+	JMP main
+
+	read_adc:
+
+	STA
+	RDA
+	STO
+	JMP main
+
+	write_adc:
+
+	STA
+	RDA
+	STO
+	JMP main
+	
+    }
+
+    set asm_str	"";
+    array set label_arr {}
+    
+    scrape_labels $asm_lab_str asm_str label_arr 
+    
+    set label_lst { main read_adc write_adc }
+    return [array_ordered_get $label_lst label_arr]
+        
+} {0 3 7}
+
+test 1.5-contig_labels { Expect success } {
+
+    set asm_lab_str {
+	main:
+	BRC 0 if_cond_0
+	JMP main
+	BRC 1 write_adc
+	JMP main
+	if_cond_0:
+	read_adc:
+	STA
+	RDA
+	STO
+	JMP main
+	write_adc:
+	STA
+	RDA
+	STO
+	JMP main
+    }
+
+    set asm_str	"";
+    array set label_arr {}
+    
+    scrape_labels $asm_lab_str asm_str label_arr 
+    
+    set label_lst { main if_cond_0 read_adc write_adc }
+    return [array_ordered_get $label_lst label_arr]
+        
+} {0 4 4 8}
+
+test 1.6-contig_labels_&_ws { Expect success } {
+
+    set asm_lab_str {
+
+	main:
+
+	BRC 0 if_cond_0
+	JMP main
+	BRC 1 write_adc
+	JMP main
+	
+	if_cond_0:
+
+	read_adc:
+
+	STA
+	RDA
+	STO
+	JMP main
+
+	write_adc:
+
+	STA
+	RDA
+	STO
+	JMP main
+    }
+
+    set asm_str	"";
+    array set label_arr {}
+    
+    scrape_labels $asm_lab_str asm_str label_arr 
+    
+    set label_lst { main if_cond_0 read_adc write_adc }
+    return [array_ordered_get $label_lst label_arr]
+        
+} {0 4 4 8}
+
+#---------------------------------------------------------------
+# 2nd pass proc's
+#---------------------------------------------------------------
+
+test 2.1-tokenize-simple { Expect success } {
+
+    set assem_str "STA\nWR 0 0xFF\nSTO"
+
+    tokenize $assem_str $s2ica::token_all_dct assem_token_lst
+    return $assem_token_lst
+    
+} [list \
+       "id $e_sta val {}" \
+       "id $e_nl val {}" \
+       "id $e_wr val {}" \
+       "id $e_ws val {}" \
+       "id $e_int val 0" \
+       "id $e_ws val {}" \
+       "id $e_hex val 0xFF" \
+       "id $e_nl val {}" \
+       "id $e_sto val {}" ]
+
+test 2.2-tokenize-symbol { Expect success } {
+
+    set assem_str "STA\nJMP main"
+
+    tokenize $assem_str $s2ica::token_all_dct assem_token_lst
+    return $assem_token_lst
+    
+} [list \
+       "id $e_sta val {}" \
+       "id $e_nl val {}" \
+       "id $e_jmp val {}" \
+       "id $e_ws val {}" \
+       "id $e_sym val main" ]
+
+
+
+tcltest::cleanupTests 0
+
+
+
+
+
+
+
+

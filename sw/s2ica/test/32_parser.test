@@ -1,0 +1,205 @@
+# ---------------------------------------------------------------------------
+#
+# -- 22_parser.test
+#
+# ---------------------------------------------------------------------------
+
+package require tcltest 2.2
+
+namespace import -force tcltest::*
+
+# Import package proc's under test
+source [file join .. bin s2ica.kit]
+package require s2ica
+
+init_token_enums
+
+
+# Tests..
+
+
+test 1.01-parse_all_nop {expect success} {
+
+    set assem_token_lst [list "id $e_nop val {}" ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_nop" ]
+
+
+test 1.02-parse_all_sta {expect success} {
+
+    set assem_token_lst [list "id $e_sta val {}" ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+
+} [list "e_opcode $e_sta" ]    
+
+
+test 1.03-parse_all_sto {expect success} {
+
+    set assem_token_lst [list "id $e_sto val {}" ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+
+} [list "e_opcode $e_sto" ]    
+
+
+test 1.04-parse_all_rda {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_rda val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {0xFF}" \
+	 ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_rda operand_1 255"]
+
+test 1.05-parse_all_rdn {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_rdn val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {0xFF}" \
+	 ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_rdn operand_1 255"]
+
+
+test 1.06-parse_all_wr {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_wr val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {0xFF}" \
+	 ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_wr operand_1 255"]
+
+
+test 1.07-parse_all_jmp {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_jmp val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {0xFF}" \
+	    ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_jmp operand_1 255"]
+
+
+test 1.08-parse_all_brc {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_brc val {}" \
+	     "id $e_ws  val {}" \
+	     "id $e_hex val {0x00}" \
+	     "id $e_ws  val {}" \
+	     "id $e_hex val {0xFF}" \
+	    ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_brc operand_1 0 operand_2 255" ]
+
+
+test 1.09-parse_all_cll {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_cll val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {0xFF}" \
+	    ]
+    
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+    
+} [list "e_opcode $e_cll operand_1 255" ]
+
+
+test 1.10-parse_all_rtn {expect success} {
+
+    set assem_token_lst [list "id $e_rtn val {}" ]
+
+    set instr_lst [list]
+    parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst
+
+    return $instr_lst
+
+} [list "e_opcode $e_rtn" ]
+
+
+
+
+
+
+
+
+
+
+
+test 2.01-parse_all_mult_instr {expect success} {
+
+    set assem_token_lst \
+	[list \
+	     "id $e_wr val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {255}" \
+	     "id $e_nl val {}" \
+	     "id $e_rda val {}" \
+	     "id $e_ws val {}" \
+	     "id $e_hex val {255}" \
+	    ]
+    
+    set instr_lst [list]
+    catch { parser::parse_all $assem_token_lst $s2ica::token_instr_dct instr_lst }
+
+    return $instr_lst
+
+} [list \
+       "e_opcode $e_wr operand_1 255" \
+       "e_opcode $e_rda operand_1 255" \
+      ]
+
+# test suite cleanup
+tcltest::cleanupTests 0
